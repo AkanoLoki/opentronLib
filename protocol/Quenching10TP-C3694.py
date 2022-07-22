@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 from opentrons import protocol_api
 # metadata
 metadata = {
@@ -6,25 +7,25 @@ metadata = {
     'description': 'Prototype protocol to prepare, start, taketimepoints and quench into a Corning 3694 96 well fluorescence microplate. Adapted from JYChow@NUS',
     'apiLevel': '2.12'}
 
+# GLOBAL VARIABLE DEFINITION
+TO_TRASH = 'trash'
+TO_RACK = 'rack'
+TO_DEF = 'default'
+
 
 def run(protocol: protocol_api.ProtocolContext):
 
+    # ----------------  RUN VARAIBLES   ------------------------
     plateCol = 12  # Number of columns in 96-well plate, in triplicates of 3, 6, 9 or 12
-    # Enter 'yes' to discard tips into trash, 'no' for tips to return to the pipette tip boxes
-    discard_tips = 'no'
 
-    def left_tips(tip, rack):
-        if tip == 'yes':
-            left_pipette.drop_tip()
-        if tip == 'no':
-            left_pipette.return_tip(rack)
+    defaultTipDiscardDest = TO_TRASH    # Default to discard used tips into tray 12 trash bin
+    #defaultTipDiscardDest = TO_RACK    # Default to return used tips back into specified rack
 
-    def right_tips(tip, rack):
-        if tip == 'yes':
-            right_pipette.drop_tip()
-        if tip == 'no':
-            right_pipette.return_tip(rack)
 
+    # ----------------  END OF RUN VARAIBLES    ----------------
+    # ----------------  EQUIPMENT AND LABWARES  ----------------
+
+    # LABWARES
     m300rack = protocol.load_labware('opentrons_96_tiprack_300ul', '1')
     m20rack = protocol.load_labware('opentrons_96_tiprack_20ul', '4')
     plate_96 = protocol.load_labware(
@@ -38,6 +39,51 @@ def run(protocol: protocol_api.ProtocolContext):
                                             tip_racks=[m300rack])
     right_pipette = protocol.load_instrument(
         'p20_multi_gen2', 'right', tip_racks=[m20rack])
+    # ----------------  END OF EQUIPMENT AND LABWARES   --------
+    # ----------------  HELPER FUNCTIONS    --------------------
+
+    # Pipette Tip Default Discarding Destination: Helper Function
+    # defaultTipDisc(p, destRack)
+    # discard the pipette tip on p to destination destRack or Trash
+    def defaultTipDisc(p, destRack):
+        # Parse default behavior definition
+        if defaultTipDiscardDest == TO_RACK:
+            # Return tip to destRack if matching TO_RACK
+            p.return_tip(destRack)
+
+        elif defaultTipDiscardDest == TO_TRASH:
+            # Discard tip to #12 (trash bin) if matching TO_TRASH
+            p.drop_tip()
+        else:
+            # Bad definition (non-fatal)
+            print('WARNING: Current protocol does not have a valid definition of "defaultTipDiscardDest":',
+                  defaultTipDiscardDest, ', fallback by discarding tip in trash')
+            # Fallback behavior would be drop to trash
+            p.drop_tip()
+
+    # Pipette Tip Discarding Destination Helper Function
+    # defaultTipDisc(p, dest, destRack)
+    # discard the pipette tip on p according to a specified dest string, to destination destRack, trash, or default behavior
+    def tipDisc(p, dest, destRack):
+        # Parse behavior definition
+        if dest == TO_RACK:
+            p.return_tip(destRack)
+
+        elif dest == TO_TRASH:
+            p.drop_tip()
+
+        elif dest == TO_DEF:
+            # Explicit default call
+            defaultTipDisc(p, destRack)
+        else:
+            # Bad dest definition, use protocol default
+            print('WARNING: Invalid definition of "dest":', dest,
+                  ', fallback by using default discard method')
+            defaultTipDisc(p, destRack)
+
+
+
+    # ----------------  END OF HELPER FUNCTIONS ----------------
 
     # Add Diluent
     left_pipette.flow_rate.aspirate = 100

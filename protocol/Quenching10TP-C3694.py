@@ -33,6 +33,13 @@ class PDef:
     name: str = ''
     used: bool = False
 
+
+@dataclass
+class WDef:
+    plate: protocol_api.labware.Labware
+    well: protocol_api.labware.Well
+    desc: str = ''
+
 # Actual script below
 
 
@@ -56,12 +63,12 @@ def run(protocol: protocol_api.ProtocolContext):
         LDef(3, '', False),
         LDef(4, 'opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', True),
         LDef(5, 'opentrons_24_tuberack_eppendorf_1.5ml_safelock_snapcap', True),
-        LDef(6, '', False),
+        LDef(6, 'thermoscientificnunc_96_wellplate_2000ul', True),
         LDef(7, '', False),
         LDef(8, '', False),
-        LDef(9, '', False),
+        LDef(9, 'opentrons_96_tiprack_300ul', True),
         LDef(10, 'opentrons_96_tiprack_300ul', True),
-        LDef(11, 'opentrons_96_tiprack_1000ul', True),
+        LDef(11, 'opentrons_96_tiprack_300ul', True),
     ]
 
     # ----------------  LABWARE INITIALIZATION  ----------------
@@ -79,8 +86,10 @@ def run(protocol: protocol_api.ProtocolContext):
     # OPENTRONS:
 
     # tipR_20
-    tipR_300_1 = deckRefs[10]
-    tipR_1000_1 = deckRefs[11]
+    tipR_300_1 = deckRefs[9]
+    tipR_300_2 = deckRefs[10]
+    tipR_300_3 = deckRefs[11]
+    # tipR_1000_1
     # tipR_20F
     # tipR_300F
     # tipR_1000F
@@ -97,36 +106,78 @@ def run(protocol: protocol_api.ProtocolContext):
     # CORNING:
     microP96_C3694 = deckRefs[1]
 
+    # THERMO SCI NUNC
+    nuncP96_2mL = deckRefs[6]
+
+    # ----------------  BUFFER SETUP            ----------------
+
+    rBuf = tubeR_6x15_4x50.wells_by_name()['A1']
+    qBuf = tubeR_6x15_4x50.wells_by_name()['A2']
+    lysate = tubeR_6x15_4x50.wells_by_name()['B1']
+    lysBuf = tubeR_6x15_4x50.wells_by_name()['C1']
+
+    substr = nuncP96_2mL.wells_by_name()['B2']
+    subBuf = tubeR_6x15_4x50.wells_by_name()['C2']
+
+    # ----------------  END OF BUFFER SETUP     ----------------
+    # ----------------  RXN WELL SETUP          ----------------
+
+    rxnWells = [
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['A1'], 'A1 E+ S+ rep1'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['B1'], 'B1 E+ S+ rep2'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['C1'], 'C1 E+ S+ rep3'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['D1'], 'D1 E+ S- rep1'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['E1'], 'E1 E+ S- rep2'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['F1'], 'F1 E- S+ rep1'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['G1'], 'G1 E- S+ rep2'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['H1'], 'H1 E- S- rep1')
+    ]
+
+    substrateWells = [
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['A2'], 'A2 10uM Sub'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['B2'], 'B2 10uM Sub'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['C2'], 'C2 10uM Sub'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['D2'], 'D2 10% DMSO'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['E2'], 'E2 10% DMSO'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['F2'], 'F2 10uM Sub'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['G2'], 'G2 10uM Sub'),
+        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['H2'], 'H2 10% DMSO')
+    ]
+    # ----------------  END OF RXN WELL SETUP   ----------------
     # ----------------  END OF LABWARE INIT.    ----------------
     # ----------------  PIPETTE INITIALIZATION  ----------------
 
-    # Specify tip rack arrays
-    tipR_20_List = []
-    tipR_300_List = [tipR_300_1]
-    tipR_1000_List = [tipR_1000_1]
-    tipR_20F_List = []
-    tipR_300F_List = []
-    tipR_1000F_List = []
-
     # Load Pipettes
     lPipette = protocol.load_instrument(
-        'p1000_single_gen2', 'left', tipR_1000_List)
+        'p300_single_gen2', 'left', [tipR_300_3])
 
     rPipette = protocol.load_instrument(
-        'p300_multi_gen2', 'right', tipR_300_List)
+        'p300_multi_gen2', 'right', [tipR_300_1, tipR_300_2])
+
+    # Alias pipette
+    p300s = lPipette
+    p300m = rPipette
+
+    # Initialize flow rate (faster than default)
+    lPipette.flow_rate.aspirate = 100
+    lPipette.flow_rate.dispense = 100
+
+    rPipette.flow_rate.aspirate = 100
+    rPipette.flow_rate.dispense = 100
 
     # ----------------  END OF PIPETTE INIT.    ----------------
     # ----------------  END OF EQUIPMENT AND LABWARES   --------
 
     # ----------------  HELPER FUNCTIONS        ----------------
 
-    # defaultTipDisc(p, destRack)
-    # discard the pipette tip on p to destination destRack or Trash
-    def defaultTipDisc(p, destRack):
+    # defaultTipDisc(p, destSpot)
+    # discard the pipette tip on p to destination rack spot destSpot or Trash
+
+    def defaultTipDisc(p, destSpot='trash'):
         # Parse default behavior definition
         if defaultTipDiscardDest == TO_RACK:
             # Return tip to destRack if matching TO_RACK
-            p.return_tip(destRack)
+            p.return_tip(destSpot)
 
         elif defaultTipDiscardDest == TO_TRASH:
             # Discard tip to #12 (trash bin) if matching TO_TRASH
@@ -138,116 +189,72 @@ def run(protocol: protocol_api.ProtocolContext):
             # Fallback behavior would be drop to trash
             p.drop_tip()
 
-    # defaultTipDisc(p, dest, destRack)
-    # discard the pipette tip on p according to a specified dest string, to destination destRack, trash, or default behavior
-    def tipDisc(p, dest: str, destRack):
+    # defaultTipDisc(p, dest, destSpot)
+    # discard the pipette tip on p according to a specified dest string, to destination rack spot destSpot, trash, or default behavior
+    def tipDisc(p, dest: str, destSpot = None):
         # Parse behavior definition
         if dest == TO_RACK:
-            p.return_tip(destRack)
+            p.drop_tip(destSpot)
 
         elif dest == TO_TRASH:
             p.drop_tip()
 
         elif dest == TO_DEF:
             # Explicit default call
-            defaultTipDisc(p, destRack)
+            defaultTipDisc(p, destSpot)
         else:
             # Bad dest definition, use protocol default
             print('WARNING: Invalid definition of "dest":', dest,
                   ', fallback by using default discard method')
-            defaultTipDisc(p, destRack)
+            defaultTipDisc(p, destSpot)
 
     # ----------------  END OF HELPER FUNCTIONS ----------------
 
     # ----------------  START OF PROGRAM        ----------------
-    # Add Diluent
-    left_pipette.flow_rate.aspirate = 100
-    left_pipette.flow_rate.dispense = 100
 
-    left_pipette.pick_up_tip(m300rack['A1'])
-    for j in range(plateCol//3):
-        left_pipette.aspirate(300, trough.wells()[11].bottom(2))
-        for i in range(3):
-            left_pipette.dispense(90, plate_96.wells()[i*8+j*24].bottom(4))
-        left_pipette.blow_out(trough.wells()[11])
-    left_tips(discard_tips, m300rack['A1'])
+    # Fill C3694 Well A1-H10 w/ 25uL ea. quenching buffer, blow out last 10uL back into tube
+    p300s.pick_up_tip()
+    for col in range(10):
+        # Aspirate each column 1-10
+        p300s.aspirate(210, qBuf, 0.5)
+        for row in range(8):
+            # Pipette each row of column A-H 25uL
+            p300s.dispense(25, microP96_C3694.wells()[8*col + row])
+        # Blow out rest in tip
+        p300s.blow_out(qBuf)
+    p300s.drop_tip()
 
-    # Dilute lysate and transfer to 384-well plate
-    right_pipette.flow_rate.aspirate = 40
-    right_pipette.flow_rate.dispense = 40
+    # Prepare 8x 30uL lysate/lysis buffer + 240uL rxn buffer reaction mix w/o substrate
 
-    for i in range(plateCol):
-        right_pipette.pick_up_tip(m20rack['A'+str(i+1)])
-        right_pipette.transfer(10, plate_96_2.wells()[
-                               i*8], plate_96.wells()[i*8], mix_after=(5, 20), new_tip='never')
-        for j in range(4):
-            if i//3 % 2 < 1:
-                right_pipette.aspirate(20, plate_96.wells()[i*8])
-                right_pipette.dispense(10, plate_384.wells()[
-                                       i*16+j*96-i//3//2*48])
-                right_pipette.blow_out(plate_96.wells()[i*8])
-            else:
-                right_pipette.aspirate(20, plate_96.wells()[i*8])
-                right_pipette.dispense(10, plate_384.wells()[
-                                       (i-3)*16+j*96+1-i//3//2*48])
-                right_pipette.blow_out(plate_96.wells()[i*8])
-        right_tips(discard_tips, m20rack['A'+str(i+1)])
+    # Lysate first
+    for row in range(8):
+        # Pipette each row of column 1 A-H 30uL according to E+ or E- in well desc
+        if 'E+' in rxnWells[row].desc:
+            p300s.transfer(30, lysate, rxnWells[row].well)
+        else:
+            p300s.transfer(30, lysBuf, rxnWells[row].well)
+    
+    # Rxn buffer acidification of lysate
+    # Pipette 240uL of reaction buffer in each well A1-H1
+    p300s.transfer(30, rBuf, rxnWells[0].plate.columns_by_name()['1'], new_tip = 'once')
 
-    protocol.pause('Add substrates!')
+    # Pause before starting rxn
+    protocol.pause('Check if mixture and plate are ready. Resuming will start pipetting substrate.')
 
     # Add substrates
-    left_pipette.pick_up_tip(m300rack['A2'])
-    left_pipette.mix(3, 300, trough.wells()[0].bottom(2))
-    for i in range(int(plateCol/3)):
-        left_pipette.aspirate(170, trough.wells()[0].bottom(2))
-        for j in range(3):
-            if i*3//3 % 2 < 1:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+i*3//3//2*48].bottom(10))
-            else:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+1+i*3//3//2*48].bottom(10))
-        left_pipette.blow_out(trough.wells()[0])
-    left_tips(discard_tips, m300rack['A2'])
+    p300m.pick_up_tip()
+    p300m.transfer(30, substrateWells[0].well,rxnWells[0].well,new_tip = 'never')
+    p300m.mix(5,150,new_tip = 'never')
+    p300m.drop_tip()
+    # Timepoint 1-10
+    delayTimes = [30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0]
+    for tp in range(10):
+        # delay first
+        protocol.delay(delayTimes[tp])
+        #transfer to C3694
+        p300m.transfer(25,rxnWells[0].well,microP96_C3694.columns()[tp][0],True)
 
-    left_pipette.pick_up_tip(m300rack['A3'])
-    left_pipette.mix(3, 300, trough.wells()[1].bottom(2))
-    for i in range(int(plateCol/3)):
-        left_pipette.aspirate(170, trough.wells()[1].bottom(2))
-        for j in range(3):
-            if i*3//3 % 2 < 1:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+i*3//3//2*48+96].bottom(10))
-            else:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+1+i*3//3//2*48+96].bottom(10))
-        left_pipette.blow_out(trough.wells()[1])
-    left_tips(discard_tips, m300rack['A3'])
-
-    left_pipette.pick_up_tip(m300rack['A4'])
-    left_pipette.mix(3, 300, trough.wells()[2].bottom(2))
-    for i in range(int(plateCol/3)):
-        left_pipette.aspirate(170, trough.wells()[2].bottom(2))
-        for j in range(3):
-            if i*3//3 % 2 < 1:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+i*3//3//2*48+192].bottom(10))
-            else:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+1+i*3//3//2*48+192].bottom(10))
-        left_pipette.blow_out(trough.wells()[2])
-    left_tips(discard_tips, m300rack['A4'])
-
-    left_pipette.pick_up_tip(m300rack['A5'])
-    left_pipette.mix(3, 300, trough.wells()[3].bottom(2))
-    for i in range(int(plateCol/3)):
-        left_pipette.aspirate(170, trough.wells()[3].bottom(2))
-        for j in range(3):
-            if i*3//3 % 2 < 1:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+i*3//3//2*48+288].bottom(10))
-            else:
-                left_pipette.dispense(50, plate_384.wells()[
-                                      j*16+1+i*3//3//2*48+288].bottom(10))
-        left_pipette.blow_out(trough.wells()[3])
-    left_tips(discard_tips, m300rack['A5'])
+    # Pause after done
+    p300m.drop_tip()
+    p300s.drop_tip()
+    protocol.pause('Sequence complete.')

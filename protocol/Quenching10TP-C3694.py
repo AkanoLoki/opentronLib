@@ -58,7 +58,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Labware list on deck
     deckLabware = [
-        LDef(1, 'corning_96_wellplate_halfarea_190ul_flat', True),
+        LDef(1, 'corning_96_wellplate_190ul', True),
         LDef(2, '', False),
         LDef(3, '', False),
         LDef(4, 'opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', True),

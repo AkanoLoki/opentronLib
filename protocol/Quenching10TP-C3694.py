@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from multiprocessing.sharedctypes import Value
 from opentrons import protocol_api
+import opentrons
 # metadata
 metadata = {
     'protocolName': '10-timepoint Quenching Assay',
@@ -91,16 +92,16 @@ def run(protocol: protocol_api.ProtocolContext):
     # OPENTRONS:
 
     # tipR_20
-    tipR_300_1 = deckRefs[9]
-    tipR_300_2 = deckRefs[10]
-    tipR_300_3 = deckRefs[11]
+    tipR_300_1: protocol_api.labware.Labware = deckRefs[9]
+    tipR_300_2: protocol_api.labware.Labware = deckRefs[10]
+    tipR_300_3: protocol_api.labware.Labware = deckRefs[11]
     # tipR_1000_1
     # tipR_20F
     # tipR_300F
     # tipR_1000F
 
     # tubeR_24xEpp = deckRefs[5]
-    tubeR_6x15_4x50 = deckRefs[4]
+    tubeR_6x15_4x50: protocol_api.labware.Labware = deckRefs[4]
     # tubeR_15x15
     # tubeR_6x50
 
@@ -109,10 +110,10 @@ def run(protocol: protocol_api.ProtocolContext):
     # aluB_flat
 
     # CORNING:
-    microP96_C3694 = deckRefs[1]
+    microP96_C3694: protocol_api.labware.Labware = deckRefs[1]
 
     # THERMO SCI NUNC
-    nuncP96_2mL = deckRefs[6]
+    nuncP96_2mL: protocol_api.labware.Labware = deckRefs[6]
 
     # ----------------  BUFFER SETUP            ----------------
 
@@ -121,8 +122,9 @@ def run(protocol: protocol_api.ProtocolContext):
     lysate = tubeR_6x15_4x50.wells_by_name()['B1']
     lysBuf = tubeR_6x15_4x50.wells_by_name()['C1']
 
-    substr = nuncP96_2mL.wells_by_name()['B2']
-    subBuf = tubeR_6x15_4x50.wells_by_name()['C2']
+    # substr = nuncP96_2mL.wells_by_name()['B2']
+    # subBuf = tubeR_6x15_4x50.wells_by_name()['C2']
+    substrCol = nuncP96_2mL
 
     # ----------------  END OF BUFFER SETUP     ----------------
     # ----------------  RXN WELL SETUP          ----------------
@@ -196,7 +198,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # defaultTipDisc(p, dest, destSpot)
     # discard the pipette tip on p according to a specified dest string, to destination rack spot destSpot, trash, or default behavior
-    def tipDisc(p, dest: str, destSpot = None):
+    def tipDisc(p, dest: str, destSpot=None):
         # Parse behavior definition
         if dest == TO_RACK:
             p.drop_tip(destSpot)
@@ -238,26 +240,30 @@ def run(protocol: protocol_api.ProtocolContext):
             p300s.transfer(30, lysate, rxnWells[row].well)
         else:
             p300s.transfer(30, lysBuf, rxnWells[row].well)
-    
+
     # Rxn buffer acidification of lysate
     # Pipette 240uL of reaction buffer in each well A1-H1
-    p300s.transfer(30, rBuf, rxnWells[0].plate.columns_by_name()['1'], new_tip = 'once')
+    p300s.transfer(30, rBuf, rxnWells[0].plate.columns_by_name()[
+                   '1'], new_tip='once')
 
     # Pause before starting rxn
-    protocol.pause('Check if mixture and plate are ready. Resuming will start pipetting substrate.')
+    protocol.pause(
+        'Check if mixture and plate are ready. Resuming will start pipetting substrate.')
 
     # Add substrates
     p300m.pick_up_tip()
-    p300m.transfer(30, substrateWells[0].well,rxnWells[0].well,new_tip = 'never')
-    p300m.mix(5,150)
+    p300m.transfer(30, substrateWells[0].well,
+                   rxnWells[0].well, new_tip='never')
+    p300m.mix(5, 150)
     p300m.drop_tip()
     # Timepoint 1-10
-    delayTimes = [30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0]
+    delayTimes = [30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0]
     for tp in range(10):
         # delay first
         protocol.delay(delayTimes[tp])
-        #transfer to C3694
-        p300m.transfer(25,rxnWells[0].well,microP96_C3694.columns()[tp][0],True)
+        # transfer to C3694
+        p300m.transfer(25, rxnWells[0].well,
+                       microP96_C3694.columns()[tp][0], True)
 
     # Finalizing cleanup
     if p300m.has_tip:

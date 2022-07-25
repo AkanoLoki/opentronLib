@@ -244,7 +244,7 @@ def run(protocol: protocol_api.ProtocolContext):
     # Add substrates
     p300m.pick_up_tip()
     p300m.transfer(30, substrateWells[0].well,rxnWells[0].well,new_tip = 'never')
-    p300m.mix(5,150,new_tip = 'never')
+    p300m.mix(5,150)
     p300m.drop_tip()
     # Timepoint 1-10
     delayTimes = [30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0,30.0]

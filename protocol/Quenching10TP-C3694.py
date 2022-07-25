@@ -254,7 +254,9 @@ def run(protocol: protocol_api.ProtocolContext):
         #transfer to C3694
         p300m.transfer(25,rxnWells[0].well,microP96_C3694.columns()[tp][0],True)
 
-    # Pause after done
-    p300m.drop_tip()
-    p300s.drop_tip()
+    # Finalizing cleanup
+    if p300m.has_tip:
+        p300m.drop_tip()
+    if p300s.has_tip:
+        p300s.drop_tip()
     protocol.pause('Sequence complete.')

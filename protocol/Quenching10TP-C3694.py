@@ -57,12 +57,17 @@ def run(protocol: protocol_api.ProtocolContext):
     # ----------------  EQUIPMENT AND LABWARES  ----------------
 
     # Labware list on deck
+    #   10      11      Trash   BACK
+    #   7       8       9
+    #   4       5       6
+    #   1       2       3       FRONT
+
     deckLabware = [
         LDef(1, 'corning_96_wellplate_190ul', True),
         LDef(2, '', False),
         LDef(3, '', False),
         LDef(4, 'opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', True),
-        LDef(5, 'opentrons_24_tuberack_eppendorf_1.5ml_safelock_snapcap', True),
+        LDef(5, 'opentrons_24_tuberack_eppendorf_1.5ml_safelock_snapcap', False),
         LDef(6, 'thermoscientificnunc_96_wellplate_2000ul', True),
         LDef(7, '', False),
         LDef(8, '', False),
@@ -94,7 +99,7 @@ def run(protocol: protocol_api.ProtocolContext):
     # tipR_300F
     # tipR_1000F
 
-    tubeR_24xEpp = deckRefs[5]
+    # tubeR_24xEpp = deckRefs[5]
     tubeR_6x15_4x50 = deckRefs[4]
     # tubeR_15x15
     # tubeR_6x50

@@ -1,4 +1,3 @@
-from ast import ClassDef
 from dataclasses import dataclass
 from multiprocessing.sharedctypes import Value
 from opentrons import protocol_api
@@ -214,7 +213,7 @@ def run(protocol: protocol_api.ProtocolContext):
     # defaultTipDisc(p, destSpot)
     # discard the pipette tip on p to destination rack spot destSpot or Trash
 
-    def defaultTipDisc(p, destSpot='trash'):
+    def defaultTipDisc(p, destSpot):
         # Parse default behavior definition
         if defaultTipDiscardDest == TO_RACK:
             # Return tip to destRack if matching TO_RACK
@@ -260,7 +259,7 @@ def run(protocol: protocol_api.ProtocolContext):
         p300s.aspirate(210, qBuf, 0.5)
         for row in range(8):
             # Pipette each row of column A-H 25uL
-            p300s.dispense(25, microP96_C3694.wells()[8*col + row])
+            p300s.dispense(25, microP96_C3694.columns()[col][row])
         # Blow out rest in tip
         p300s.blow_out(qBuf)
     p300s.drop_tip()

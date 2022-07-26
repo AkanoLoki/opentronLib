@@ -143,14 +143,14 @@ def run(protocol: protocol_api.ProtocolContext):
     lysBuf = tubeR_6x15_4x50.wells_by_name()['C1']
     # alternative: detailed buffer data
     # circumvented for now under if False statement
-    if (1):
-        rBufContent = [
-            TDef.CDef('Citric Acid', 0.1),
-            TDef.CDef('Tris-HCl', 0.01),
-            TDef.CDef('NaCl', 0.3)
-        ]
-        rBuf = TDef(tubeR_6x15_4x50, tubeR_6x15_4x50.wells_by_name()[
-                    'A1'], 'Reaction Buffer', rBufContent, 2.0, 15, True)
+    #if (1):
+    #    rBufContent = [
+    #        TDef.CDef('Citric Acid', 0.1),
+    #        TDef.CDef('Tris-HCl', 0.01),
+    #        TDef.CDef('NaCl', 0.3)
+    #    ]
+    #    rBuf = TDef(tubeR_6x15_4x50, tubeR_6x15_4x50.wells_by_name()[
+    #                'A1'], 'Reaction Buffer', rBufContent, 2.0, 15, True)
 
     # ----------------  END OF BUFFER SETUP     ----------------
 

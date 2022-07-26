@@ -42,8 +42,8 @@ class TDef:
     # Dataclass for Rack-loaded Tube definition
     plate: protocol_api.labware.Labware
     holder: protocol_api.labware.Well
+    content: list[CDef]
     name: str = ''
-    content: list[CDef] = [CDef('air', 1.0/22.4)]
     pH: float = 0.0
     volume: float = 0.0  # in mL
     used: bool = False
@@ -68,7 +68,6 @@ class WDef:
 def run(protocol: protocol_api.ProtocolContext):
 
     # ----------------  RUN VARAIBLES           ----------------
-    plateCol = 12  # Number of columns in 96-well plate, in triplicates of 3, 6, 9 or 12
 
     # Default used tip discarding method: TO_TRASH or TO_RACK
     defaultTipDiscardDest = TO_TRASH

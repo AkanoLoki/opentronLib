@@ -1,3 +1,4 @@
+from ast import ClassDef
 from dataclasses import dataclass
 from multiprocessing.sharedctypes import Value
 from opentrons import protocol_api
@@ -23,8 +24,28 @@ OT2_DECK_SLOTS = 11  # Number of available deck slots in a OT-2 robot
 
 @dataclass
 class LDef:
+    # Dataclass for Labware definition
     slot: int
     name: str = ''
+    used: bool = False
+
+
+@dataclass
+class TDef:
+
+    @dataclass
+    class CDef:
+        # Dataclass subclass for concentration definition, only used here.
+        cName: str = 'void'
+        conc: float = 0.0   # concentration
+
+    # Dataclass for Rack-loaded Tube definition
+    plate: protocol_api.labware.Labware
+    holder: protocol_api.labware.Well
+    name: str = ''
+    content: list[CDef] = [CDef('air', 1.0/22.4)]
+    pH: float = 0.0
+    volume: float = 0.0  # in mL
     used: bool = False
 
 
@@ -121,34 +142,48 @@ def run(protocol: protocol_api.ProtocolContext):
     qBuf = tubeR_6x15_4x50.wells_by_name()['A2']
     lysate = tubeR_6x15_4x50.wells_by_name()['B1']
     lysBuf = tubeR_6x15_4x50.wells_by_name()['C1']
-
-    # substr = nuncP96_2mL.wells_by_name()['B2']
-    # subBuf = tubeR_6x15_4x50.wells_by_name()['C2']
-    substrCol = nuncP96_2mL
+    # alternative: detailed buffer data
+    # circumvented for now under if False statement
+    if (1):
+        rBufContent = [
+            TDef.CDef('Citric Acid', 0.1),
+            TDef.CDef('Tris-HCl', 0.01),
+            TDef.CDef('NaCl', 0.3)
+        ]
+        rBuf = TDef(tubeR_6x15_4x50, tubeR_6x15_4x50.wells_by_name()[
+                    'A1'], 'Reaction Buffer', rBufContent, 2.0, 15, True)
 
     # ----------------  END OF BUFFER SETUP     ----------------
+
+    # ----------------  EMPTY VESSEL SETUP      ----------------
+    # substr = nuncP96_2mL.wells_by_name()['B2']
+    # subBuf = tubeR_6x15_4x50.wells_by_name()['C2']
+    rxnCol: list[protocol_api.labware.Well] = nuncP96_2mL.columns()[0]
+    substrCol: list[protocol_api.labware.Well] = nuncP96_2mL.columns()[1]
+
+    # ----------------  END OF EMPTY VESSEL SETUP   ------------
     # ----------------  RXN WELL SETUP          ----------------
 
     rxnWells = [
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['A1'], 'A1 E+ S+ rep1'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['B1'], 'B1 E+ S+ rep2'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['C1'], 'C1 E+ S+ rep3'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['D1'], 'D1 E+ S- rep1'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['E1'], 'E1 E+ S- rep2'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['F1'], 'F1 E- S+ rep1'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['G1'], 'G1 E- S+ rep2'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['H1'], 'H1 E- S- rep1')
+        WDef(nuncP96_2mL, rxnCol[0], 'A1 E+ S+ rep1'),
+        WDef(nuncP96_2mL, rxnCol[1], 'B1 E+ S+ rep2'),
+        WDef(nuncP96_2mL, rxnCol[2], 'C1 E+ S+ rep3'),
+        WDef(nuncP96_2mL, rxnCol[3], 'D1 E+ S- rep1'),
+        WDef(nuncP96_2mL, rxnCol[4], 'E1 E+ S- rep2'),
+        WDef(nuncP96_2mL, rxnCol[5], 'F1 E- S+ rep1'),
+        WDef(nuncP96_2mL, rxnCol[6], 'G1 E- S+ rep2'),
+        WDef(nuncP96_2mL, rxnCol[7], 'H1 E- S- rep1')
     ]
 
     substrateWells = [
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['A2'], 'A2 10uM Sub'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['B2'], 'B2 10uM Sub'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['C2'], 'C2 10uM Sub'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['D2'], 'D2 10% DMSO'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['E2'], 'E2 10% DMSO'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['F2'], 'F2 10uM Sub'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['G2'], 'G2 10uM Sub'),
-        WDef(nuncP96_2mL, nuncP96_2mL.wells_by_name()['H2'], 'H2 10% DMSO')
+        WDef(nuncP96_2mL, substrCol[0], 'A2 10uM Sub'),
+        WDef(nuncP96_2mL, substrCol[1], 'B2 10uM Sub'),
+        WDef(nuncP96_2mL, substrCol[2], 'C2 10uM Sub'),
+        WDef(nuncP96_2mL, substrCol[3], 'D2 10% DMSO'),
+        WDef(nuncP96_2mL, substrCol[4], 'E2 10% DMSO'),
+        WDef(nuncP96_2mL, substrCol[5], 'F2 10uM Sub'),
+        WDef(nuncP96_2mL, substrCol[6], 'G2 10uM Sub'),
+        WDef(nuncP96_2mL, substrCol[7], 'H2 10% DMSO')
     ]
     # ----------------  END OF RXN WELL SETUP   ----------------
     # ----------------  END OF LABWARE INIT.    ----------------

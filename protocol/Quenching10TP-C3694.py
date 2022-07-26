@@ -276,8 +276,8 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Rxn buffer acidification of lysate
     # Pipette 240uL of reaction buffer in each well A1-H1
-    p300s.transfer(30, rBuf, rxnWells[0].plate.columns_by_name()[
-                   '1'], new_tip='once')
+    p300s.transfer(30, rBuf, rxnWells[0].plate.columns_by_name().get(
+                   '1'), new_tip='once')
 
     # Pause before starting rxn
     protocol.pause(

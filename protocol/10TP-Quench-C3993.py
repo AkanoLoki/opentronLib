@@ -123,12 +123,26 @@ def run(protocol: protocol_api.ProtocolContext):
     # Prepare 8x 30uL lysate/lysis buffer + 240uL rxn buffer reaction mix w/o substrate
 
     # Lysate first
+    lastE = '0'
+    p300s.pick_up_tip()
     for row in range(8):
         # Pipette each row of column 1 A-H 30uL according to E+ or E- in well desc
         if 'E+' in rxnWells[row][2]:
-            p300s.transfer(30, lysate, rxnWells[row][1])
+            if lastE in 'E-':
+                # Change tip upon content switch
+                p300s.drop_tip()
+                p300s.pick_up_tip()
+            p300s.transfer(30, lysate, rxnWells[row][1], new_tip='never')
+            lastE = 'E+'
         else:
-            p300s.transfer(30, lysBuf, rxnWells[row][1])
+            if lastE in 'E+':
+                # Change tip upon content switch
+                p300s.drop_tip()
+                p300s.pick_up_tip()
+            p300s.transfer(30, lysBuf, rxnWells[row][1], new_tip='never')
+            lastE = 'E-'
+            
+    p300s.drop_tip()
 
     # Rxn buffer acidification of lysate
     # Pipette 240uL of reaction buffer in each well A1-H1

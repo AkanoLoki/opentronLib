@@ -290,7 +290,7 @@ def run(protocol: protocol_api.ProtocolContext):
     p300m.mix(5, 150)
     p300m.drop_tip()
     # Timepoint 1-10
-    delayTimes = [30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0]
+    delayTimes = [16.85, 35.3, 35.3, 35.3, 35.3, 35.3, 35.3, 35.3, 35.3, 35.3]
     for tp in range(10):
         # delay first
         protocol.delay(delayTimes[tp])

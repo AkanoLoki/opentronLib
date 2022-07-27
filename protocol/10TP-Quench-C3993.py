@@ -9,15 +9,6 @@ metadata = {
     'description': 'Prototype protocol to prepare, start, taketimepoints and quench into a Corning 3993 96 well fluorescence microplate. Adapted from JYChow@NUS',
     'apiLevel': '2.12'}
 
-# GLOBAL VARIABLE DEFINITION
-
-OT2_DECK_SLOTS = 11  # Number of available deck slots in a OT-2 robot
-
-# DATACLASS OF LABWARE DEFINITIONS
-
-
-# Actual script below
-
 
 def run(protocol: protocol_api.ProtocolContext):
     # ----------------  EQUIPMENT AND LABWARES  ----------------
@@ -38,8 +29,6 @@ def run(protocol: protocol_api.ProtocolContext):
         'opentrons_96_tiprack_300ul', 9)
     tipR_300_2: protocol_api.labware.Labware = protocol.load_labware(
         'opentrons_96_tiprack_300ul', 10)
-    tipR_300_3: protocol_api.labware.Labware = protocol.load_labware(
-        'opentrons_96_tiprack_300ul', 11)
     # tipR_1000_1
     # tipR_20F
     # tipR_300F
@@ -72,35 +61,28 @@ def run(protocol: protocol_api.ProtocolContext):
     lysBuf = tubeR_6x15_4x50.wells_by_name()['C1']
 
     # ----------------  END OF BUFFER SETUP     ----------------
-    # ----------------  EMPTY VESSEL SETUP      ----------------
-    # substr = nuncP96_2mL.wells_by_name()['B2']
-    # subBuf = tubeR_6x15_4x50.wells_by_name()['C2']
-    rxnCol: list[protocol_api.labware.Well] = nuncP96_1mL.columns()[0]
-    substrCol: list[protocol_api.labware.Well] = nuncP96_1mL.columns()[1]
-
-    # ----------------  END OF EMPTY VESSEL SETUP   ------------
     # ----------------  RXN WELL SETUP          ----------------
 
     rxnWells = [
-        (nuncP96_1mL, rxnCol[0], 'A1 E+ S+ rep1'),
-        (nuncP96_1mL, rxnCol[1], 'B1 E+ S+ rep2'),
-        (nuncP96_1mL, rxnCol[2], 'C1 E+ S+ rep3'),
-        (nuncP96_1mL, rxnCol[3], 'D1 E+ S- rep1'),
-        (nuncP96_1mL, rxnCol[4], 'E1 E+ S- rep2'),
-        (nuncP96_1mL, rxnCol[5], 'F1 E- S+ rep1'),
-        (nuncP96_1mL, rxnCol[6], 'G1 E- S+ rep2'),
-        (nuncP96_1mL, rxnCol[7], 'H1 E- S- rep1')
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][0], 'A1 E+ S+ rep1'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][1], 'B1 E+ S+ rep2'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][2], 'C1 E+ S+ rep3'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][3], 'D1 E+ S- rep1'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][4], 'E1 E+ S- rep2'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][5], 'F1 E- S+ rep1'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][6], 'G1 E- S+ rep2'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[0][7], 'H1 E- S- rep1')
     ]
 
     substrateWells = [
-        (nuncP96_1mL, substrCol[0], 'A2 10uM Sub'),
-        (nuncP96_1mL, substrCol[1], 'B2 10uM Sub'),
-        (nuncP96_1mL, substrCol[2], 'C2 10uM Sub'),
-        (nuncP96_1mL, substrCol[3], 'D2 10% DMSO'),
-        (nuncP96_1mL, substrCol[4], 'E2 10% DMSO'),
-        (nuncP96_1mL, substrCol[5], 'F2 10uM Sub'),
-        (nuncP96_1mL, substrCol[6], 'G2 10uM Sub'),
-        (nuncP96_1mL, substrCol[7], 'H2 10% DMSO')
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][0], 'A2 10uM Sub'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][1], 'B2 10uM Sub'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][2], 'C2 10uM Sub'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][3], 'D2 10% DMSO'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][4], 'E2 10% DMSO'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][5], 'F2 10uM Sub'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][6], 'G2 10uM Sub'),
+        (nuncP96_1mL, nuncP96_1mL.columns()[1][7], 'H2 10% DMSO')
     ]
     # ----------------  END OF RXN WELL SETUP   ----------------
     # ----------------  END OF LABWARE INIT.    ----------------
@@ -108,13 +90,13 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Load Pipettes
     p300s = protocol.load_instrument(
-        'p300_single_gen2', 'left', [tipR_300_3])
+        'p300_single_gen2', 'left', [tipR_300_2])
 
     p300m = protocol.load_instrument(
-        'p300_multi_gen2', 'right', [tipR_300_1, tipR_300_2])
+        'p300_multi_gen2', 'right', [tipR_300_1])
 
     # Initialize flow rate (faster than default)
-    p300s.flow_rate.aspirate = 100
+    p300s.flow_rate.aspirate = 50
     p300s.flow_rate.dispense = 100
 
     p300m.flow_rate.aspirate = 100
@@ -150,7 +132,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Rxn buffer acidification of lysate
     # Pipette 240uL of reaction buffer in each well A1-H1
-    p300s.transfer(30, rBuf, rxnWells[0][0].columns_by_name()[
+    p300s.transfer(240, rBuf, rxnWells[0][0].columns_by_name()[
                    '1'], new_tip='once')
 
     # Pause before starting rxn

@@ -46,7 +46,7 @@ def run(protocol: protocol_api.ProtocolContext):
     # aluB_flat
 
     # CORNING:
-    microP96_C3694: protocol_api.labware.Labware = protocol.load_labware(
+    microP96_C3993: protocol_api.labware.Labware = protocol.load_labware(
         'corning_96_wellplate_190ul', 1)
 
     # THERMO SCI NUNC
@@ -115,7 +115,7 @@ def run(protocol: protocol_api.ProtocolContext):
         p300s.aspirate(210, qBuf, 0.5)
         for row in range(8):
             # Pipette each row of column A-H 25uL
-            p300s.dispense(25, microP96_C3694.columns()[col][row])
+            p300s.dispense(25, microP96_C3993.columns()[col][row])
         # Blow out rest in tip
         p300s.blow_out(qBuf)
     p300s.drop_tip()
@@ -166,7 +166,7 @@ def run(protocol: protocol_api.ProtocolContext):
         protocol.delay(delayTimes[tp])
         # transfer to C3694
         p300m.transfer(25, rxnWells[0][1],
-                       microP96_C3694.columns()[tp][0], True)
+                       microP96_C3993.columns()[tp][0], True)
 
     # Finalizing cleanup
     if p300m.has_tip:

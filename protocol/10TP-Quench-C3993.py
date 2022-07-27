@@ -141,7 +141,7 @@ def run(protocol: protocol_api.ProtocolContext):
                 p300s.pick_up_tip()
             p300s.transfer(30, lysBuf, rxnWells[row][1], new_tip='never')
             lastE = 'E-'
-            
+
     p300s.drop_tip()
 
     # Rxn buffer acidification of lysate
